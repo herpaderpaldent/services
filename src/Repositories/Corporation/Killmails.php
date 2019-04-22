@@ -3,7 +3,7 @@
 /*
  * This file is part of SeAT
  *
- * Copyright (C) 2015, 2016, 2017, 2018  Leon Jacobs
+ * Copyright (C) 2015, 2016, 2017, 2018, 2019  Leon Jacobs
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,39 +33,20 @@ trait Killmails
      * @param bool $get
      * @param int  $chunk
      *
-     * @return \Illuminate\Pagination\LengthAwarePaginator
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator|\Illuminate\Database\Eloquent\Builder|CorporationKillmail
      */
-    public function getCorporationKillmails(
-        int $corporation_id, bool $get = true, int $chunk = 200)
+    public function getCorporationKillmails(int $corporation_id)
     {
 
-        $killmails = CorporationKillmail::select(
-            '*',
-            'corporation_killmails.corporation_id as ownerID',
-            'killmail_victims.character_id as victimID')
-            ->leftJoin(
-                'killmail_details',
-                'corporation_killmails.killmail_id', '=',
-                'killmail_details.killmail_id')
-            ->leftJoin(
-                'killmail_victims',
-                'killmail_victims.killmail_id', '=',
-                'corporation_killmails.killmail_id'
-            )
-            ->leftJoin(
-                'invTypes',
-                'killmail_victims.ship_type_id', '=',
-                'invTypes.typeID')
-            ->leftJoin('mapDenormalize',
-                'killmail_details.solar_system_id', '=',
-                'mapDenormalize.itemID')
+        return CorporationKillmail::with(
+            'killmail_detail',
+            'killmail_detail.solar_system',
+            'killmail_victim',
+            'killmail_victim.ship_type',
+            'killmail_victim.victim_character',
+            'killmail_victim.victim_corporation',
+            'killmail_victim.victim_alliance')
             ->where('corporation_killmails.corporation_id', $corporation_id);
-
-        if ($get)
-            return $killmails->orderBy('corporation_killmails.killmail_id', 'desc')
-                ->paginate($chunk);
-
-        return $killmails;
 
     }
 }

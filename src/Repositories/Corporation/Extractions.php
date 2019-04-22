@@ -22,31 +22,26 @@
 
 namespace Seat\Services\Repositories\Corporation;
 
-use Illuminate\Database\Eloquent\Builder;
-use Seat\Eveapi\Models\Corporation\CorporationMemberTracking;
+use Seat\Eveapi\Models\Industry\CorporationIndustryMiningExtraction;
 
 /**
- * Class Members.
+ * Trait Extractions.
  * @package Seat\Services\Repositories\Corporation
  */
-trait Members
+trait Extractions
 {
     /**
-     * Return the Member Tracking for a Corporation.
-     *
      * @param int $corporation_id
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return \Illuminate\Database\Eloquent\Builder|CorporationIndustryMiningExtraction
      */
-    public function getCorporationMemberTracking(int $corporation_id): Builder
+    public function getCorporationExtractions(int $corporation_id)
     {
-
-        return CorporationMemberTracking::with(
-            'user',
-            'user.refresh_token',
-            'type'
-            )
-            ->where('corporation_id', $corporation_id);
-
+        // retrieve any valid extraction for the current corporation
+        return CorporationIndustryMiningExtraction::with(
+            'moon', 'moon.system', 'moon.constellation', 'moon.region', 'moon.moon_contents', 'moon.moon_contents.type',
+            'structure', 'structure.info', 'structure.services')
+            ->where('corporation_id', $corporation_id)
+            ->where('natural_decay_time', '>', carbon()->subSeconds(CorporationIndustryMiningExtraction::THEORETICAL_DEPLETION_COUNTDOWN))
+            ->orderBy('chunk_arrival_time');
     }
 }

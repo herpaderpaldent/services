@@ -3,7 +3,7 @@
 /*
  * This file is part of SeAT
  *
- * Copyright (C) 2015, 2016, 2017, 2018  Leon Jacobs
+ * Copyright (C) 2015, 2016, 2017, 2018, 2019  Leon Jacobs
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ trait Search
         // checks
         $user = auth()->user();
 
-        $messages = MailHeader::with('body', 'recipients');
+        $messages = MailHeader::with('body', 'recipients', 'sender');
 
         // If the user is a super user, return all
         if (! $user->hasSuperUser()) {
@@ -167,7 +167,7 @@ trait Search
                 // Add any characters from owner API keys
                 $user_character_ids = auth()->user()->group->users->pluck('id')->toArray();
 
-                $query->orWhere('character_assets.character_id', $user_character_ids);
+                $query->orWhereIn('character_assets.character_id', $user_character_ids);
             });
         }
 

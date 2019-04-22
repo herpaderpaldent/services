@@ -3,7 +3,7 @@
 /*
  * This file is part of SeAT
  *
- * Copyright (C) 2015, 2016, 2017, 2018  Leon Jacobs
+ * Copyright (C) 2015, 2016, 2017, 2018, 2019  Leon Jacobs
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 
 namespace Seat\Services\Repositories\Configuration;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Seat\Web\Models\Group;
 use Seat\Web\Models\User as UserModel;
@@ -35,15 +36,6 @@ trait UserRespository
     /**
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function getAllUsers()
-    {
-
-        return UserModel::all();
-    }
-
-    /**
-     * @return \Illuminate\Database\Eloquent\Collection|static[]
-     */
     public function getAllGroups()
     {
 
@@ -51,13 +43,14 @@ trait UserRespository
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Collection|static[]
+     * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getAllFullUsers()
+    public function getAllFullUsers() : Builder
     {
 
-        return UserModel::with('group.roles', 'affiliations', 'refresh_token')
-            ->get();
+        return UserModel::with('refresh_token', 'group.roles')->select('users.*')
+            ->where('id', '<>', 1)
+            ->orderBy('group_id', 'asc');
     }
 
     /**

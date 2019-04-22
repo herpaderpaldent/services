@@ -20,39 +20,35 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+namespace Seat\Services\Repositories\Seat\Filters;
 
-class AlterHistoricalPricesColumns extends Migration
+use Illuminate\Support\Collection;
+use Seat\Eveapi\Models\Character\CharacterInfo;
+use Seat\Eveapi\Models\Universe\UniverseName;
+
+/**
+ * Class DataTablesFilter.
+ * @package Seat\Services\Repositories\Seat\Filters
+ */
+trait NamedIdFilter
 {
     /**
-     * Run the migrations.
+     * @param $keyword
      *
-     * @return void
+     * @return \Illuminate\Support\Collection
      */
-    public function up()
+    public function getIdsForNames($keyword) : Collection
     {
-
-        Schema::table('historical_prices', function (Blueprint $table) {
-
-            $table->decimal('average_price', 30, 2)->default(0.0)->change();
-            $table->decimal('adjusted_price', 30, 2)->default(0.0)->change();
-        });
-    }
-
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
-    {
-
-        Schema::table('historical_prices', function (Blueprint $table) {
-
-            $table->decimal('average_price')->change();
-            $table->decimal('adjusted_price')->change();
-        });
+        return UniverseName::where('name', 'like', '%' . $keyword . '%')
+            ->get()
+            ->map(function ($resolved_id) {
+                return $resolved_id->entity_id;
+            })
+            ->merge(CharacterInfo::where('name', 'like', '%' . $keyword . '%')
+                ->get()
+                ->map(function ($character_info) {
+                    return $character_info->character_id;
+                })
+            );
     }
 }

@@ -3,7 +3,7 @@
 /*
  * This file is part of SeAT
  *
- * Copyright (C) 2015, 2016, 2017, 2018  Leon Jacobs
+ * Copyright (C) 2015, 2016, 2017, 2018, 2019  Leon Jacobs
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@
 
 namespace Seat\Services\Repositories\Character;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Seat\Eveapi\Models\Industry\CharacterMining;
 
 /**
@@ -37,20 +39,20 @@ trait MiningLedger
      *
      * @return mixed
      */
-    public function getCharacterLedger(int $character_id, bool $get = true)
+    public function getCharacterLedger(Collection $character_ids) : Builder
     {
 
-        $ledger = CharacterMining::select('character_minings.date', 'solar_system_id', 'character_minings.type_id')
-            ->join('invTypes', 'invTypes.typeID', 'character_minings.type_id')
+        return CharacterMining::with('type', 'system')
+            ->select(
+                'character_minings.date',
+                'character_minings.character_id',
+                'solar_system_id',
+                'character_minings.type_id',
+                'historical_prices.adjusted_price')
             ->leftJoin('historical_prices', function ($join) {
                 $join->on('historical_prices.type_id', '=', 'character_minings.type_id')
                      ->on('historical_prices.date', '=', 'character_minings.date');
             })
-            ->where('character_id', $character_id);
-
-        if (! $get)
-            return $ledger;
-
-        return $ledger->get();
+            ->whereIn('character_id', $character_ids->toArray());
     }
 }
